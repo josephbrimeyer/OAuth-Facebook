@@ -1,8 +1,8 @@
 const express = require("express");
 const mongoose = require("mongoose");
-passport = require("passport");
-localStrategy = require("passport-local");
-passportLocalMongoose = require("passport-local-mongoose");
+// passport = require("passport");
+// localStrategy = require("passport-local");
+// passportLocalMongoose = require("passport-local-mongoose");
 
 const methodOverride = require("method-override");
 const session = require("express-session");
@@ -19,13 +19,13 @@ const app = express();
 app.set("view engine", "ejs");
 
 //User session
-app.use(
-  session({
-    secret: "parti-app",
-    resave: false,
-    saveUninitialized: false,
-  })
-);
+// app.use(
+//   session({
+//     secret: "oauth_facebook",
+//     resave: false,
+//     saveUninitialized: false,
+//   })
+// );
 
 app.use(methodOverride("_method"));
 
@@ -37,13 +37,13 @@ app.use(express.json());
 // code goes here ......
 
 //homepage route
-app.get("/", (req, res) => {
-  res.send("Facebook-OAuth homepage");
-});
+// app.get("/", (req, res) => {
+//   res.send("OAuth-Facebook homepage");
+// });
 
 // routes
-const userRouter = require("./routes/users.js");
-app.use("/users", userRouter);
+// const userRouter = require("./routes/users.js");
+// app.use("/users", userRouter);
 
 // Server connection.
 app.listen(PORT, () => {
