@@ -3,8 +3,7 @@ const mongoose = require("mongoose");
 passport = require("passport");
 localStrategy = require("passport-local");
 passportLocalMongoose = require("passport-local-mongoose");
-
-var Strategy = require("passport-facebook").Strategy;
+FacebookStrategy = require("passport-facebook").Strategy;
 
 const methodOverride = require("method-override");
 const session = require("express-session");
@@ -16,6 +15,46 @@ const User = require("./models/User.js");
 require("dotenv").config();
 const PORT = process.env.PORT || 3001;
 const app = express();
+
+app.use(methodOverride("_method"));
+
+// parse incoming data into a JS object attached to the request
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+// FacebookStrategy within Passport
+passport.use(
+  new FacebookStrategy(
+    {
+      clientID: process.env.FACEBOOK_APP_ID,
+      clientSecret: process.env.FACEBOOK_APP_SECRET,
+      callbackURL: "http://localhost:3000/auth/facebook/callback",
+    },
+    function (accessToken, refreshToken, profile, cb) {
+      console.log(profile);
+      // passport callback function
+      //check if user already exists in our db with the given profile ID
+      User.findOne({ facebookId: profile.id }).then((currentUser) => {
+        if (currentUser) {
+          console.log(profile);
+          //if we already have a record with the given profile ID
+          done(null, currentUser);
+        } else {
+          //if not, create a new user
+          user = new User({
+            username: profile.displayName,
+            email: profile.emails[0].value,
+            facebookId: profile.id,
+          });
+          user.save(function (err) {
+            if (err) console.log(err);
+            return done(null, user);
+          });
+        }
+      });
+    }
+  )
+);
 
 // Configure view engine to render EJS templates.
 app.set("views", __dirname + "/views");
@@ -38,6 +77,20 @@ app.use(
 // session.
 app.use(passport.initialize());
 app.use(passport.session());
+
+//read and encode data from the session
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser((id, done) => {
+  User.findById(id).then((user) => {
+    done(null, user);
+  });
+});
 
 // Define routes.
 app.get("/", function (req, res) {
@@ -64,28 +117,6 @@ app.get(
   function (req, res) {
     res.render("profile", { user: req.user });
   }
-);
-
-app.use(methodOverride("_method"));
-
-// parse incoming data into a JS object attached to the request
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-
-// FacebookStrategy within Passport
-passport.use(
-  new Strategy(
-    {
-      clientID: process.env.FACEBOOK_APP_ID,
-      clientSecret: process.env.FACEBOOK_APP_SECRET,
-      callbackURL: "http://localhost:3000/auth/facebook/callback",
-    },
-    function (accessToken, refreshToken, profile, cb) {
-      User.findOrCreate({ facebookId: profile.id }, function (err, user) {
-        return cb(err, user);
-      });
-    }
-  )
 );
 
 // Server connection.
