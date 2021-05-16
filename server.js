@@ -28,7 +28,7 @@ passport.use(
     {
       clientID: process.env.FACEBOOK_APP_ID,
       clientSecret: process.env.FACEBOOK_APP_SECRET,
-      callbackURL: "http://localhost:3000/auth/facebook/callback",
+      callbackURL: "http://localhost:3001/auth/facebook/callback",
     },
     function (accessToken, refreshToken, profile, cb) {
       console.log(profile);
@@ -54,6 +54,18 @@ passport.use(
       });
     }
   )
+);
+
+// Facebook route middleware.
+app.get("/auth/facebook", passport.authenticate("facebook"));
+
+app.get(
+  "/auth/facebook/callback",
+  passport.authenticate("facebook", { failureRedirect: "/login" }),
+  function (req, res) {
+    // Successful authentication, redirect home.
+    res.redirect("/");
+  }
 );
 
 // Configure view engine to render EJS templates.
@@ -87,7 +99,7 @@ passport.serializeUser((user, done) => {
 });
 
 passport.deserializeUser((id, done) => {
-  User.findById(id).then((user) => {
+  User.findOne(id).then((user) => {
     done(null, user);
   });
 });

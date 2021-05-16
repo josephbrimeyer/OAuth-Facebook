@@ -18,6 +18,7 @@ const userSchema = new Schema({
   },
   facebookId: {
     type: String,
+    required: false,
   },
 });
 
