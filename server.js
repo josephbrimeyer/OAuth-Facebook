@@ -26,17 +26,29 @@ app.use(express.json());
 passport.use(
   new FacebookStrategy(
     {
-      clientID: process.env.FACEBOOK_APP_ID,
-      clientSecret: process.env.FACEBOOK_APP_SECRET,
-      callbackURL: "http://localhost:3001/auth/facebook/callback",
+      clientID: process.env.FACEBOOK_CLIEN_ID,
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
+      callbackURL: process.env.FACEBOOK_CALLBACK_URL,
+      profileFields: ["email", "name"]
     },
-    function (accessToken, refreshToken, profile, cb) {
+    function (accessToken, refreshToken, profile, done) {
+      const { email, first_name, last_name } = profile._json;
+      const userData = {
+        email,
+        firstName: first_name,
+        lastName: last_name
+      };
+      new userModel(userData).save();
+      done(null, profile);
+    }
+  )
+);
       console.log(profile);
       // passport callback function
       //check if user already exists in our db with the given profile ID
       User.findOne({ facebookId: profile.id }).then((currentUser) => {
         if (currentUser) {
-          console.log(profile);
+          // console.log(profile);
           //if we already have a record with the given profile ID
           done(null, currentUser);
         } else {
