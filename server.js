@@ -26,47 +26,46 @@ app.use(express.json());
 passport.use(
   new FacebookStrategy(
     {
-      clientID: process.env.FACEBOOK_CLIEN_ID,
+      clientID: process.env.FACEBOOK_CLIENT_ID,
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
       callbackURL: process.env.FACEBOOK_CALLBACK_URL,
-      profileFields: ["email", "name"]
+      profileFields: ["email", "name"],
     },
     function (accessToken, refreshToken, profile, done) {
       const { email, first_name, last_name } = profile._json;
       const userData = {
         email,
         firstName: first_name,
-        lastName: last_name
+        lastName: last_name,
       };
       new userModel(userData).save();
       done(null, profile);
-    }
-  )
-);
+      console.log(accessToken);
+      console.log(refreshToken);
       console.log(profile);
-      // passport callback function
-      //check if user already exists in our db with the given profile ID
-      User.findOne({ facebookId: profile.id }).then((currentUser) => {
-        if (currentUser) {
-          // console.log(profile);
-          //if we already have a record with the given profile ID
-          done(null, currentUser);
-        } else {
-          //if not, create a new user
-          user = new User({
-            username: profile.displayName,
-            email: profile.emails[0].value,
-            facebookId: profile.id,
-          });
-          user.save(function (err) {
-            if (err) console.log(err);
-            return done(null, user);
-          });
-        }
-      });
     }
   )
 );
+// Passport callback function.
+// Check if user already exists in our db with the given profile ID.
+User.findOrCreate({ facebookId: profile.id }).then((currentUser) => {
+  if (currentUser) {
+    // console.log(profile);
+    //if we already have a record with the given profile ID
+    done(null, currentUser);
+  } else {
+    //if not, create a new user
+    user = new User({
+      username: profile.displayName,
+      email: profile.emails[0].value,
+      facebookId: profile.id,
+    });
+    user.save(function (err) {
+      if (err) console.log(err);
+      return done(null, user);
+    });
+  }
+});
 
 // Facebook route middleware.
 app.get("/auth/facebook", passport.authenticate("facebook"));
